@@ -1,0 +1,168 @@
+﻿@page "/fetchuserdetails"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+
+<h1>User Data</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <a href='/user/add' class="btn btn-primary" role="button">
+            <i class="fas fa-user-plus"></i>
+            Add User
+        </a>
+    </div>
+    <div class="input-group col">
+        <input type="text" class="form-control" placeholder="Search user by name"
+               @bind="SearchString" @bind:event="oninput" @onkeyup="FilterUser" />
+        @if (SearchString.Length > 0)
+        {
+            <div class="input-group-append">
+                <button class="btn btn-danger" @onclick="ResetSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+<br />
+
+@if (userList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped align-middle table-bordered">
+        <thead class="table-success">
+            <tr>
+                <th>ID</th>
+                <th>Lastname</th>
+                <th>Firstname</th>
+                <th>Middlename</th>
+                <th>Address</th>
+                <th>Cell No</th>
+                <th>E-mail</th>
+                <th>Position</th>
+                <th>Department</th>
+                <th>Company</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in userList)
+            {
+                <tr>
+                    <td>@user.Userid</td>
+                    <td>@user.Lastname</td>
+                    <td>@user.Firstname</td>
+                    <td>@user.Middlename</td>
+                    <td>@user.Address</td>
+                    <td>@user.Cellnumber</td>
+                    <td>@user.Emailid</td>
+                    <td>@GetPositionName(user.PositionId)</td>
+                    <td>@GetDepartmentName(user.DepartmentId)</td>
+                    <td>@GetCompanyName(user.CompanyId)</td>
+                    <td>
+                        <a href='/user/edit/@user.Userid' class="btn btn-outline-dark" role="button">
+                            Edit
+                        </a>
+                        <a href='/user/delete/@user.Userid' class="btn btn-outline-danger" role="button">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    protected List<User> userList = new();
+    protected List<User> searchUserData = new();
+    protected User user = new();
+    protected string SearchString { get; set; } = string.Empty;
+
+    protected Position position = new();
+
+    protected Department department = new();
+
+    protected Company company = new();
+
+    protected List<Position> positionList = new();
+
+    protected List<Department> departmentList = new();
+
+    protected List<Company> companyList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetUser();
+        await GetPosition();
+        await GetDepartment();
+        await GetCompany();
+    }
+
+    protected async Task GetUser()
+    {
+        userList = await Http.GetFromJsonAsync<List<User>>("api/User");
+        searchUserData = userList;
+    }
+    protected async Task GetPosition()
+    {
+        positionList = await Http.GetFromJsonAsync<List<Position>>("api/Position");
+    }
+
+    protected async Task GetDepartment()
+    {
+        departmentList = await Http.GetFromJsonAsync<List<Department>>("api/Department");
+    }
+
+    protected async Task GetCompany()
+    {
+        companyList = await Http.GetFromJsonAsync<List<Company>>("api/Company");
+    }
+
+    protected string GetPositionName(int positionId)
+    {
+        var position = positionList.FirstOrDefault(p => p.PositionId == positionId);
+        return position?.PositionName ?? "Position Not Found";
+    }
+
+    protected string GetDepartmentName(int departmentId)
+    {
+        var department = departmentList.FirstOrDefault(d => d.DepartmentId == departmentId);
+        return department?.DepartmentName ?? "Department Not Found";
+    }
+
+    protected string GetCompanyName(int companyId)
+    {
+        var company = companyList.FirstOrDefault(c => c.CompanyId == companyId);
+        return company?.CompanyName ?? "Company Not Found";
+    }
+
+    protected void FilterUser()
+    {
+        if (!string.IsNullOrEmpty(SearchString))
+        {
+            userList = searchUserData
+                .Where(x => x.Lastname.IndexOf(SearchString, StringComparison.OrdinalIgnoreCase) != -1)
+                .ToList();
+        }
+        else
+        {
+            userList = searchUserData;
+        }
+    }
+
+    protected void DeleteConfirm(int userID)
+    {
+        user = userList.FirstOrDefault(x => x.Userid == userID);
+    }
+
+    public void ResetSearch()
+    {
+        SearchString = string.Empty;
+        userList = searchUserData;
+    }
+    
+}

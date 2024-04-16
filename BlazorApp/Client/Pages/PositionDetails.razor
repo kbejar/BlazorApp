@@ -1,0 +1,106 @@
+﻿@page "/fetchpositiondetails"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+
+<h3>Position Details</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <a href='/position/add' class="btn btn-primary" role="button">
+            <i class="fas fa-user-plus"></i>
+            Add Position
+        </a>
+    </div>
+    <div class="input-group col">
+        <input type="text" class="form-control" placeholder="Search Position by name"
+               @bind="SearchString" @bind:event="oninput" @onkeyup="FilterUser" />
+        @if (SearchString.Length > 0)
+        {
+            <div class="input-group-append">
+                <button class="btn btn-danger" @onclick="ResetSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+<br />
+
+@if (positionList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped align-middle table-bordered">
+        <thead class="table-success">
+            <tr>
+                <th>ID</th>
+                <th>Position</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var position in positionList)
+            {
+                <tr>
+                    <td>@position.PositionId</td>
+                    <td>@position.PositionName</td>
+                    <td>@position.Description</td>
+                    <td>
+                        <a href='/position/edit/@position.PositionId' class="btn btn-outline-dark" role="button">
+                            Edit
+                        </a>
+                        <a href='/position/delete/@position.PositionId' class="btn btn-outline-danger" role="button">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    protected List<Position> positionList = new();
+    protected List<Position> searchUserData = new();
+    protected Position position = new();
+    protected string SearchString { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetPosition();
+    }
+
+    protected async Task GetPosition()
+    {
+        positionList = await Http.GetFromJsonAsync<List<Position>>("api/Position");
+        searchUserData = positionList;
+    }
+
+    protected void FilterUser()
+    {
+        if (!string.IsNullOrEmpty(SearchString))
+        {
+            positionList = searchUserData
+                .Where(x => x.PositionName.IndexOf(SearchString, StringComparison.OrdinalIgnoreCase) != -1)
+                .ToList();
+        }
+        else
+        {
+            positionList = searchUserData;
+        }
+    }
+
+    protected void DeleteConfirm(int positionID)
+    {
+        position = positionList.FirstOrDefault(x => x.PositionId == positionID);
+    }
+
+    public void ResetSearch()
+    {
+        SearchString = string.Empty;
+        positionList = searchUserData;
+    }
+}

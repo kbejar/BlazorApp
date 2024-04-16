@@ -1,0 +1,66 @@
+﻿@page "/department/add"
+@page "/department/edit/{departmentId:int}"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Add Department</h3>
+
+<EditForm Model="@department" OnValidSubmit="SaveDepartment">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label for="Name" class="form-label">Department</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="department.DepartmentName" />
+        </div>
+        <ValidationMessage For="@(() => department.DepartmentName)" />
+    </div>
+    <div class="mb-3">
+        <label for="Name" class="form-label">Description</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="department.Description" />
+        </div>
+        <ValidationMessage For="@(() => department.Description)" />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button class="btn btn-light" @onclick="Cancel">Cancel</button>
+    </div>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public int departmentId { get; set; }
+
+    protected string Title = "Add";
+    protected Department department = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (departmentId != 0)
+        {
+            Title = "Edit";
+            department = await Http.GetFromJsonAsync<Department>("api/Department/" + departmentId);
+        }
+
+    }
+
+    protected async Task SaveDepartment()
+    {
+        if (department.DepartmentId != 0)
+        {
+            await Http.PutAsJsonAsync("api/Department", department);
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/Department", department);
+        }
+        Cancel();
+    }
+
+    public void Cancel()
+    {
+        NavigationManager.NavigateTo("/fetchdepartmentdetails");
+    }
+}

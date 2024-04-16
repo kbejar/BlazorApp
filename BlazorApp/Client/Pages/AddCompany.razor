@@ -1,0 +1,66 @@
+﻿@page "/company/add"
+@page "/company/edit/{companyId:int}"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Add Company</h3>
+
+
+<EditForm Model="@company" OnValidSubmit="SaveCompany">
+    <DataAnnotationsValidator />
+    <div class="mb-3">
+        <label for="Name" class="form-label">Company</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="company.CompanyName" />
+        </div>
+        <ValidationMessage For="@(() => company.CompanyName)" />
+    </div>
+    <div class="mb-3">
+        <label for="Name" class="form-label">Description</label>
+        <div class="col-md-4">
+            <InputText class="form-control" @bind-Value="company.Description" />
+        </div>
+        <ValidationMessage For="@(() => company.Description)" />
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button class="btn btn-light" @onclick="Cancel">Cancel</button>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int companyId { get; set; }
+
+    protected string Title = "Add";
+    protected Company company = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (companyId != 0)
+        {
+            Title = "Edit";
+            company = await Http.GetFromJsonAsync<Company>("api/Company/" + companyId);
+        }
+
+    }
+
+    protected async Task SaveCompany()
+    {
+        if (company.CompanyId != 0) 
+        {
+            await Http.PutAsJsonAsync("api/Company", company);
+        }
+        else
+        {
+            await Http.PostAsJsonAsync("api/Company", company);
+        }
+        Cancel();
+    }
+
+    public void Cancel()
+    {
+        NavigationManager.NavigateTo("/fetchcompanydetails");
+    }
+}

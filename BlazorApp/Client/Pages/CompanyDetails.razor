@@ -1,0 +1,105 @@
+﻿@page "/fetchcompanydetails"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+
+<h1>Company Data</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <a href='/company/add' class="btn btn-primary" role="button">
+            <i class="fas fa-user-plus"></i>
+            Add Company
+        </a>
+    </div>
+    <div class="input-group col">
+        <input type="text" class="form-control" placeholder="Search company by name"
+               @bind="SearchString" @bind:event="oninput" @onkeyup="FilterUser" />
+        @if (SearchString.Length > 0)
+        {
+            <div class="input-group-append">
+                <button class="btn btn-danger" @onclick="ResetSearch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+<br />
+
+@if (companyList == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped align-middle table-bordered">
+        <thead class="table-success">
+            <tr>
+                <th>ID</th>
+                <th>Company</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var company in companyList)
+            {
+                <tr>
+                    <td>@company.CompanyId</td>
+                    <td>@company.CompanyName</td>
+                    <td>@company.Description</td>
+                    <td>
+                        <a href='/company/edit/@company.CompanyId' class="btn btn-outline-dark" role="button">
+                            Edit
+                        </a>
+                        <a href='/company/delete/@company.CompanyId' class="btn btn-outline-danger" role="button">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@code {
+    protected List<Company> companyList = new();
+    protected List<Company> searchUserData = new();
+    protected Company company = new();
+    protected string SearchString { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetCompany();
+    }
+
+    protected async Task GetCompany()
+    {
+        companyList = await Http.GetFromJsonAsync<List<Company>>("api/Company");
+        searchUserData = companyList;
+    }
+
+    protected void FilterUser()
+    {
+        if (!string.IsNullOrEmpty(SearchString))
+        {
+            companyList = searchUserData
+                .Where(x => x.CompanyName.IndexOf(SearchString, StringComparison.OrdinalIgnoreCase) != -1)
+                .ToList();
+        }
+        else
+        {
+            companyList = searchUserData;
+        }
+    }
+
+    protected void DeleteConfirm(int companyID)
+    {
+        company = companyList.FirstOrDefault(x => x.CompanyId == companyID);
+    }
+
+    public void ResetSearch()
+    {
+        SearchString = string.Empty;
+        companyList = searchUserData;
+    }
+}

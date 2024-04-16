@@ -1,0 +1,49 @@
+﻿@page "/position/delete/{positionId:int}"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Delete Position</h3>
+<br />
+
+<div class="form-group">
+    <h4>Do you want to delete this Position?</h4>
+    <table class="table">
+        <tbody>
+            <tr>
+                <td>Position Name</td>
+                <td>@position.PositionName</td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td>@position.Description</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="form-group">
+    <input type="submit" value="Delete" @onclick="(async () => await RemovePosition(position.PositionId))" class="btn btn-danger" />
+    <input type="submit" value="Cancel" @onclick="(() => Cancel())" class="btn btn-warning" />
+</div>
+
+@code {
+    [Parameter]
+    public int positionId { get; set; }
+    Position position = new Position();
+
+    protected override async Task OnInitializedAsync()
+    {
+        position = await Http.GetFromJsonAsync<Position>("/api/Position/" + Convert.ToInt32(positionId));
+    }
+
+    protected async Task RemovePosition(int positionId)
+    {
+        await Http.DeleteAsync("api/Position/" + positionId);
+        NavigationManager.NavigateTo("/fetchpositiondetails");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/fetchpositiondetails");
+    }
+}

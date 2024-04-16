@@ -1,0 +1,50 @@
+﻿@page "/department/delete/{departmentId:int}"
+@using BlazorApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<h3>Delete Department</h3>
+<br />
+
+<div class="form-group">
+    <h4>Do you want to delete this Department?</h4>
+    <table class="table">
+        <tbody>
+            <tr>
+                <td>Department Name</td>
+                <td>@department.DepartmentName</td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td>@department.Description</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="form-group">
+    <input type="submit" value="Delete" @onclick="(async () => await RemoveDepartment(department.DepartmentId))" class="btn btn-danger" />
+    <input type="submit" value="Cancel" @onclick="(() => Cancel())" class="btn btn-warning" />
+</div>
+
+
+@code {
+    [Parameter]
+    public int departmentId { get; set; }
+    Department department = new Department();
+
+    protected override async Task OnInitializedAsync()
+    {
+        department = await Http.GetFromJsonAsync<Department>("/api/Department/" + Convert.ToInt32(departmentId));
+    }
+
+    protected async Task RemoveDepartment(int departmentId)
+    {
+        await Http.DeleteAsync("api/Department/" + departmentId);
+        NavigationManager.NavigateTo("/fetchdepartmentdetails");
+    }
+
+    void Cancel()
+    {
+        NavigationManager.NavigateTo("/fetchdepartmentdetails");
+    }
+}
